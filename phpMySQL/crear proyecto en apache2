@@ -1,0 +1,45 @@
+cd /etc/apache2/sites-available
+
+sudo vim nombreDelProyecto.local.conf
+
+<VirtualHost *:80>
+#Basic setup
+ServerName galeria.local
+DocumentRoot /home/egibide/proyectos/pruebasPhp/phpMySQL/galeriaFotos
+DirectoryIndex index.php
+
+        <Directory /home/egibide/proyectos/pruebasPhp/phpMySQL/galeriaFotos>
+                Order Deny,Allow
+                #Deny from all
+                #allow from 192.168.0
+                Allow from all
+                #Don't show indexes for directories
+                Options +Indexes +FollowSymLinks
+                AllowOverride All
+                Require all granted
+        </Directory>
+        #
+</VirtualHost>
+
+En DocumentRoot y Directory tienen que ir la direccion absoluta de lode esta el proyecto. 
+Con pwd en la consola desde el proyecto se consigue.
+
+escape y :wq para guardar.
+
+cs ../sites-enabled/
+
+sudo ln -s ../sites-available/nombreDelProyecto.local.conf
+
+reiniciar apache2
+
+sudo /etc/init.d/apache2 restart
+
+sudo vim /etc/hosts
+
+añadir nuestro proyecto
+127.0.0.1       nombreDelProyecto.local
+
+y ya estaria en el navegador poniendo http://nombreDelProyecto.local
+
+
+

@@ -1,0 +1,6 @@
+para mirar en el navegador los php hace falta hacerlo desde un servidor
+
+Para ello desde la terminal escribimos php -S localhost:5000 (ten en cuenta que lo hara desde la carpeta donde estes)
+
+El enlace sera para abrirlo desde el navegador
+

@@ -1,0 +1,30 @@
+si no esta instalado composer instalalo con
+
+	sudo apt install composer
+
+primero vamos al directorio donde quieres hacer el proyecto.
+
+ 	symfony new prueba2 --full --version=3.4
+
+para crear el proyecto.
+
+entras a la carpeta del proyecto y ejecutas este comando.
+
+ 	symfony server:start
+
+saldra en verde este resultado si todo a ido bien.
+
+ [OK] Web server listening on http://127.0.0.1:8000 (PHP CLI 7.2.19) 
+
+
+
+Synfony 4 mejor explicado y con estructura de ficheros nueva:
+
+https://www.youtube.com/watch?v=d1EoJFrJKZM&list=PLDbrnXa6SAzXBvGdqrSftpUJlOoThypJB&index=1
+
+
+
+
+contraseña lanpoltsa
+
+Lanpoltsa.Egibide.2019

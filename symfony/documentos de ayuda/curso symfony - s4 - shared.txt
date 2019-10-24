@@ -1,0 +1,365 @@
+==============SYMFONY 4======================
+============================================================configuracion inicial================================================
+
+https://twig.symfony.com/doc/2.x/
+
+
+composer require asset
+composer require server --dev
+========================================
+composer require doctrine maker
+  make:command
+  make:controller <- composer require annotations
+  make:entity
+  make:form
+  make:functional-test
+  make:subscriber
+  make:twig-extension
+  make:unit-test
+  make:validator
+  make:voter
+
+php bin/console make:controller (ejemplo)
+========================================
+==TWIG==
+composer require twig (los twig se guardan en la carpeta template)
+==TWIG==
+==============BASES DE DATOS===============
+composer require doctrine maker
+
+
+php bin/console doctrine:database:create <- Crea la BD
+php bin/console make:entity Name  <- Crea Entidades
+
+php bin/console doctrine:migrations:diff <- genera las migraciones
+php bin/console doctrine:migrations:migrate <- ejecuta el codigo sql de las migraciones generadas
+(getters y setters se generan manualmente - o con phpstorm)
+php bin/console doctrine:schema:update --force
+
+http://symfony.com/doc/current/reference/constraints/Type.html#reference-constraint-type-type
+
+==============BASES DE DATOS===============
+
+
+
+===============FORMS===================
+composer require form
+http://symfony.com/doc/current/forms.html (Built-in Field Types)
+===============FORMS===================
+
+================FOSUSERBUNDLE==============
+framework.yaml agregar bajo el framework: los servicios de traduccion
+
+1) translator: ~
+
+2)DEscomentar las sesiones
+
+    session:
+        handler_id: ~
+
+3)LIMPIAR CACHE
+3.1) composer require symfony/templating
+3.2) composer require symfony/validator
+4)dentro del framework.yaml 
+
+
+fos_user:
+    registration:
+            confirmation:
+                enabled: true
+    db_driver: orm
+    firewall_name: main
+    user_class: App\Entity\User
+    from_email:
+           address: correo@algo.com
+           sender_name: toFront
+    service:
+            mailer: 'fos_user.mailer.noop'
+
+
+
+5) ejecutar 
+composer require friendsofsymfony/user-bundle "~2.0"
+//con el skeleton de symfony se automatizan procesos, agregando el bundle al bundles.php de symfony. y resgistrandolo automaticamente
+
+
+6) Crear mi clase USER (Entidad)
+
+<?php
+
+namespace App\Entity;
+
+use Doctrine\ORM\Mapping as ORM;
+use FOS\UserBundle\Model\User as BaseUser;
+
+/**
+ * @ORM\Entity(repositoryClass="App\Repository\UserRepository")
+ */
+class User extends BaseUser
+{
+    /**
+     * @ORM\Id
+     * @ORM\GeneratedValue
+     * @ORM\Column(type="integer")
+     */
+    protected $id;
+
+    public function __construct()
+    {
+        parent::__construct();
+        // your own logic
+    }
+}
+
+
+
+7) Configurar los parametros de seguridad (borrar todo y agregar):
+Config> pagckage >security.yml
+
+security:
+    encoders:
+            FOS\UserBundle\Model\UserInterface: bcrypt
+
+    role_hierarchy:
+            ROLE_ADMIN:       ROLE_USER
+            ROLE_SUPER_ADMIN: ROLE_ADMIN
+    # https://symfony.com/doc/current/book/security.html#where-do-users-come-from-user-providers
+    providers:
+        fos_userbundle:
+                id: fos_user.user_provider.username
+        in_memory: { memory: ~ }
+    firewalls:
+        dev:
+            pattern: ^/(_(profiler|wdt)|css|images|js)/
+            security: false
+        main:
+            pattern: ^/
+            form_login:
+              provider: fos_userbundle
+              csrf_token_generator: security.csrf.token_manager
+
+            logout:       true
+            anonymous:    true
+
+            # activate different ways to authenticate
+
+            # http_basic: ~
+            # https://symfony.com/doc/current/book/security.html#a-configuring-how-your-users-will-authenticate
+
+            # form_login: ~
+            # https://symfony.com/doc/current/cookbook/security/form_login_setup.html
+    access_control:
+            - { path: ^/login$, role: IS_AUTHENTICATED_ANONYMOUSLY }
+            - { path: ^/register, role: IS_AUTHENTICATED_ANONYMOUSLY }
+            - { path: ^/resetting, role: IS_AUTHENTICATED_ANONYMOUSLY }
+            - { path: ^/admin/, role: ROLE_ADMIN }
+
+8) configurar en el archivo de rutas
+# config/routing.yaml
+fos_user:
+    resource: "@FOSUserBundle/Resources/config/routing/all.xml"
+
+
+9) Actualizar el esquema da la bd
+
+
+(Puede generar probleas con las migraciones debido a que la base de datos postgrest es muy actualizada. para ello):
+https://github.com/doctrine/dbal/issues/2868
+
+10) Registrar las rutas en 
+#/config/routing.yml
+
+
+fos_user_security:
+    resource: "@FOSUserBundle/Resources/config/routing/security.xml"
+
+fos_user_profile:
+    resource: "@FOSUserBundle/Resources/config/routing/profile.xml"
+    prefix: /profile
+
+fos_user_register:
+    resource: "@FOSUserBundle/Resources/config/routing/registration.xml"
+    prefix: /register
+
+fos_user_resetting:
+    resource: "@FOSUserBundle/Resources/config/routing/resetting.xml"
+    prefix: /resetting
+
+fos_user_change_password:
+    resource: "@FOSUserBundle/Resources/config/routing/change_password.xml"
+    prefix: /profile
+
+
+USO DEL FOS USER BUNDLE
+Crear Usuarios
+php bin/console fos:user:create
+
+(ROL ADMIN SE AGREGA POR DEFECTO)
+Asignar Rol:
+php bin/console fos:user:promote
+
+
+https://symfony.com/doc/master/bundles/FOSUserBundle/command_line_tools.html <-  Comandos.
+https://github.com/FriendsOfSymfony/FOSUserBundle/issues/139 <- resolver problemas con tabla User en postgres
+
+
+================FOSUSERBUNDLE==============
+
+composer require symfony/apache-pack <- (correr server desde apache)
+
+Runserver:
+php -S 127.0.0.1:8000 -t public
+
+
+
+=============================
+public function request_detail(Request $request){
+        if(!$request->isXmlHttpRequest()){
+            throw new Exception("Ups! something is wrong, this is not an ajax request");
+        }
+        $em = $this->getDoctrine()->getManager();
+        $id = $request->request->get('id');
+        $request_id = $request->request->get('request_id');
+        $customer = $em->getRepository(Customer::class)->find($id);
+        $solicitude = $em -> getRepository(Solicitude::class)->find($request_id);
+        return $this->render('adviser_templates/view_request_detail.html.twig', array("customer"=>$customer, "solicitude" =>$solicitude));
+//        $customer_response = array(
+//            //Custom params
+//            "id"=>$customer->getId(),
+//            "name"=>$customer->getName(),
+//            "lastname"=> $customer->getLastname(),
+//            "mobile"=>$customer->getMobile(),
+//            "telephone"=>$customer->getTelephone(),
+//            "country"=>$customer->getCountry()->getName(),
+//            //request params
+//            "solicitude_id"=>$solicitude->getId(),
+//            "companyname"=>$solicitude->getCommpanyName(),
+//            "createDate"=>$solicitude->getCreatedat(),
+//            "state"=>$solicitude->getState()
+//            );
+//        $response =  new Response(\json_encode($customer_response));
+//        $response->headers->set('content-Type', 'application/json');
+//        return $response;
+
+    }
+
+
+            success: function (data) {
+                console.log(data['state']);
+            }
+================================================
+
+https://symfony.com/doc/current/reference/constraints/UniqueEntity.html#basic-usage
+yarn install
+yarn run encore dev
+
+
+
+
+
+//PARA EL ENVIO DE EMAILS 
+ES NECESARIO TENER UNA CUENTA EN UN SERVIDOR DE CORREOS, SMPT ES EL PROTOCOLO DE ENVIO DE MENSAJES PLANOS
+SYMFONY UTILIZA EL SWIFTMAILER PARA EL ENVIO DE CORREOS ELECTRONICOS, POR DEFECTO, EL FOSUSERBUNDLE UTILIZA ESTE 
+SWIFTMAILER TAMBIEN. 
+
+SI SE USA EL REGISTER DEL FOSUSERBUNDLE, NO ES NECESARIO HACER CONFIGURACIONES
+YA QUE EL CONTROLADOR LO HACE TODO.
+PERO SI SE DESEA TENER UN CONTROLADOR PERSONAL PODRÍA USARSE ESTA REFERENCIA:
+
+//Este metodo registra un usuario, le pone el token en falso, dicho token pasa a true una vez se ha
+//dado click en el link que le llega al cliente
+
+
+
+    private function register($email, $username, $password)
+    {
+        $userManager = $this->get('fos_user.user_manager');
+        $mailer = $this->get('fos_user.mailer');
+        $email_exist = $userManager->findUserByEmail($email);
+        $token = sha1(uniqid(mt_rand(), true));
+        if ($email_exist) {
+            return false;
+        }
+        $user = $userManager->createUser();
+        $user->setUsername($username);
+        $user->setEmail($email);
+        $user->setEmailCanonical($email);
+        $user->setEnabled(false);
+        $user->setPlainPassword($password);
+        $user->addRole('ROLE_CUSTOMER');
+        $user->setConfirmationToken($token);
+        $mailer->sendConfirmationEmailMessage($user);
+        $userManager->updateUser($user);
+        return $user;
+    }
+}
+
+//El confirmationEnabled se activa en el framework.yaml  cuando en el fos_user se pone: 
+
+    registration:
+            confirmation:
+                enabled: true
+
+
+    public function index(Request $request)
+    {
+        $customer = new Customer();
+        $form = $this->createForm(CustomerType::class, $customer);
+        $form->handleRequest($request);
+        if ($form->isSubmitted() && $form->isValid()) {
+            $em = $this->getDoctrine()->getManager();
+            $pass = $form->get('password')->getData();
+            $email = $form->get('email')->getData();
+            $user=$this->register($email, $email, $pass);
+            $confirmationEnabled = $this->container->getParameter('fos_user.registration.confirmation.enabled');
+            if($confirmationEnabled){
+                $this->container->get('session')->set('fos_user_send_confirmation_email/email',$user->getEmail());
+                $route = 'fos_user_registration_check_email';
+                $url = $this->container->get('router')->generate($route);
+                $em->persist($customer);
+                $em->flush($customer);
+                return new RedirectResponse($url);
+            }
+
+        }
+        return $this->render('backend/customer/customer_register.html.twig', array('form' => $form->createView()));
+    }
+
+
+EJEMPLO DEL .ENV
+
+MAILER_URL=smtp://s6.g3tm.com?encryption=ssl&auth_mode=login&username=tofront@modomxclientes.com&password=qazxsw21@2018
+
+Documentacion:
+https://symfony.com/doc/current/email.html
+
+(Para mas referencia consultar el proyecto TOFRONT)
+=============================================================================================
+
+Instalar localizeddate
+
+1 -> activar el intl en el xampp
+2 -> composer require symfony/intl
+3 -> composer require twig/extensions
+4 )
+Enable the intl twig extension in config.yml or services.yml file:
+
+services:
+    twig.extension.intl:
+        class: Twig_Extensions_Extension_Intl
+        tags:
+            - { name: twig.extension }
+
+================
+BARRA DE BUGS
+
+composer require profiler --dev
+https://stackoverflow.com/questions/8749939/how-do-i-disable-the-symfony-2-profiler-bar <- desactivar
+
+
+====================
+
+Hacer funcionar el llamado Ajax
+https://openclassrooms.com/forum/sujet/symfony-3-4-avec-jquery-ajax
+
+========================
